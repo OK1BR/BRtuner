@@ -43,6 +43,12 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     title: 'BRtuner',
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#202020',
+      symbolColor: '#cccccc',
+      height: 32
+    },
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
