@@ -1,10 +1,40 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
+import { readFileSync } from 'node:fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+interface TunerConfig {
+  host: string
+  port: number
+  username: string
+  password: string
+}
+
+let tunerConfig: TunerConfig | null = null
+
+function loadTunerConfig(): TunerConfig | null {
+  const path = join(app.getAppPath(), 'tuner.config.local.json')
+  try {
+    const raw = readFileSync(path, 'utf-8')
+    const cfg = JSON.parse(raw) as Partial<TunerConfig>
+    if (!cfg.host || !cfg.username || cfg.password === undefined) {
+      console.error(`[config] ${path} missing host/username/password`)
+      return null
+    }
+    return {
+      host: cfg.host,
+      port: cfg.port ?? 80,
+      username: cfg.username,
+      password: cfg.password
+    }
+  } catch (err) {
+    console.error(`[config] cannot read ${path}: ${(err as Error).message}`)
+    return null
+  }
+}
+
 function createWindow(): void {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1100,
     height: 720,
@@ -16,7 +46,8 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      webviewTag: true
     }
   })
 
@@ -29,8 +60,6 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -38,40 +67,40 @@ function createWindow(): void {
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.brtuner')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  tunerConfig = loadTunerConfig()
+
+  // Auto-supply digest credentials whenever any webContents prompts for login
+  // against the configured tuner host.
+  app.on('login', (event, _webContents, _request, authInfo, callback) => {
+    if (!tunerConfig) return
+    if (authInfo.host === tunerConfig.host) {
+      event.preventDefault()
+      callback(tunerConfig.username, tunerConfig.password)
+    }
+  })
+
+  ipcMain.handle('tuner:url', () => {
+    if (!tunerConfig) return null
+    const port = tunerConfig.port === 80 ? '' : `:${tunerConfig.port}`
+    return `http://${tunerConfig.host}${port}/`
+  })
 
   createWindow()
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

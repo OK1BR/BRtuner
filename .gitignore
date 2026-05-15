@@ -7,3 +7,5 @@ out
 .claude/
 .vscode/
 tuner-research/
+*.local.json
+tuner-debug.log
