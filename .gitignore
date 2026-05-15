@@ -6,3 +6,4 @@ out
 *.log*
 .claude/
 .vscode/
+tuner-research/
