@@ -36,10 +36,11 @@ function loadTunerConfig(): TunerConfig | null {
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
-    width: 1100,
-    height: 720,
-    minWidth: 800,
-    minHeight: 600,
+    width: 540,
+    height: 380,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
     show: false,
     autoHideMenuBar: true,
     title: 'BRtuner',

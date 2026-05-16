@@ -16,6 +16,40 @@ const TUNER_CSS_OVERRIDES = `
   }
   .container {
     background-color: #202020 !important;
+    top: -130px !important;
+    left: 0 !important;
+  }
+  .rectangle-atu {
+    background-color: #202020 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  body,
+  .callsg,
+  .mode-icon,
+  .readouts,
+  .label-number,
+  .callsign,
+  .top-label,
+  .btn,
+  .btn-upgrade {
+    color: #ffffff !important;
+  }
+  .btn,
+  .btn-upgrade,
+  .rectangle {
+    box-shadow: none !important;
+  }
+  .btn,
+  .btn-upgrade {
+    background-color: #202020 !important;
+  }
+  .parameters,
+  .icon-lan {
+    background-color: #202020 !important;
+  }
+  .footer {
+    display: none !important;
   }
   ::-webkit-scrollbar {
     display: none !important;
